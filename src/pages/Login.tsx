@@ -4,10 +4,51 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BarChart3, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Successfully signed in!",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-data flex items-center justify-center p-4">
@@ -32,7 +73,7 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -40,6 +81,9 @@ const Login = () => {
                   type="email"
                   placeholder="Enter your email"
                   className="h-12"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -50,6 +94,9 @@ const Login = () => {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     className="h-12 pr-12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                   <Button
                     type="button"
@@ -74,8 +121,13 @@ const Login = () => {
                   Forgot password?
                 </Link>
               </div>
-              <Button variant="data" className="w-full h-12 text-base">
-                Sign In
+              <Button 
+                type="submit" 
+                variant="data" 
+                className="w-full h-12 text-base"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
             
