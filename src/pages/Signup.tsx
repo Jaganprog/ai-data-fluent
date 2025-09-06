@@ -4,10 +4,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BarChart3, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    company: "",
+    password: ""
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            display_name: `${formData.firstName} ${formData.lastName}`,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            company: formData.company
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Account created! Please check your email to verify your account.",
+        });
+        navigate("/login");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const benefits = [
     "Unlimited CSV uploads",
@@ -58,7 +117,7 @@ const Signup = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
@@ -66,6 +125,9 @@ const Signup = () => {
                     id="firstName"
                     placeholder="John"
                     className="h-12"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -74,6 +136,9 @@ const Signup = () => {
                     id="lastName"
                     placeholder="Doe"
                     className="h-12"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -85,6 +150,9 @@ const Signup = () => {
                   type="email"
                   placeholder="john@company.com"
                   className="h-12"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  required
                 />
               </div>
               
@@ -94,6 +162,8 @@ const Signup = () => {
                   id="company"
                   placeholder="Your company name"
                   className="h-12"
+                  value={formData.company}
+                  onChange={(e) => handleInputChange("company", e.target.value)}
                 />
               </div>
               
@@ -105,6 +175,10 @@ const Signup = () => {
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a strong password"
                     className="h-12 pr-12"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    required
+                    minLength={8}
                   />
                   <Button
                     type="button"
@@ -125,8 +199,13 @@ const Signup = () => {
                 </p>
               </div>
               
-              <Button variant="data" className="w-full h-12 text-base">
-                Start Free Trial
+              <Button 
+                type="submit" 
+                variant="data" 
+                className="w-full h-12 text-base"
+                disabled={isLoading}
+              >
+                {isLoading ? "Creating Account..." : "Start Free Trial"}
               </Button>
             </form>
             
