@@ -18,6 +18,8 @@ import {
   LogOut
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AskAI } from "@/components/AskAI";
+import { ChartGenerator } from "@/components/ChartGenerator";
 
 const Dashboard = () => {
   return (
@@ -193,6 +195,12 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* AI Features */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <AskAI />
+              <ChartGenerator />
+            </div>
 
             {/* Recent Activity */}
             <div className="grid md:grid-cols-2 gap-6">
