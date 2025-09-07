@@ -45,9 +45,20 @@ const Signup = () => {
       });
 
       if (error) {
+        // Handle specific error cases
+        let errorMessage = error.message;
+        
+        if (error.message.includes("timeout") || error.message.includes("504")) {
+          errorMessage = "The signup request timed out. Please try again in a moment.";
+        } else if (error.message.includes("User already registered")) {
+          errorMessage = "An account with this email already exists. Try signing in instead.";
+        } else if (!error.message || error.message.trim() === "") {
+          errorMessage = "Unable to create account. Please try again.";
+        }
+        
         toast({
-          title: "Error",
-          description: error.message,
+          title: "Signup Failed",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
@@ -57,10 +68,21 @@ const Signup = () => {
         });
         navigate("/login");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      
+      // Handle network and other errors
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error.name === "AbortError" || error.message?.includes("timeout")) {
+        errorMessage = "The request timed out. Please check your connection and try again.";
+      } else if (error.message?.includes("NetworkError") || error.message?.includes("fetch")) {
+        errorMessage = "Network error. Please check your internet connection.";
+      }
+      
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
