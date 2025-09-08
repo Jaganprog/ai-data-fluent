@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/enhanced-button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/enhanced-card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
   BarChart3, 
@@ -20,8 +20,12 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AskAI } from "@/components/AskAI";
 import { ChartGenerator } from "@/components/ChartGenerator";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation */}
@@ -46,10 +50,28 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => {
+                toast({
+                  title: "Notifications",
+                  description: "No new notifications",
+                });
+              }}
+            >
               <Bell className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => {
+                toast({
+                  title: "Settings",
+                  description: "Opening settings...",
+                });
+              }}
+            >
               <Settings className="w-5 h-5" />
             </Button>
             <Avatar>
@@ -63,7 +85,7 @@ const Dashboard = () => {
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            <Card variant="gradient">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Plus className="w-5 h-5" />
@@ -71,15 +93,51 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="data" className="w-full justify-start">
+                <Button 
+                  variant="default" 
+                  className="w-full justify-start bg-gradient-to-r from-primary to-data-secondary"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.csv';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        toast({
+                          title: "File Selected",
+                          description: `${file.name} is ready for upload`,
+                        });
+                      }
+                    };
+                    input.click();
+                  }}
+                >
                   <Upload className="w-4 h-4" />
                   Upload CSV
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast({
+                      title: "New Chat",
+                      description: "Starting a new AI conversation",
+                    });
+                  }}
+                >
                   <MessageSquare className="w-4 h-4" />
                   New Chat
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast({
+                      title: "Create Dashboard",
+                      description: "Opening dashboard creator",
+                    });
+                  }}
+                >
                   <BarChart3 className="w-4 h-4" />
                   Create Dashboard
                 </Button>
@@ -120,7 +178,7 @@ const Dashboard = () => {
           <div className="lg:col-span-3 space-y-6">
             {/* Welcome Section */}
             <div className="grid md:grid-cols-4 gap-4">
-              <Card variant="elevated">
+              <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -133,7 +191,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               
-              <Card variant="elevated">
+              <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -146,7 +204,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               
-              <Card variant="elevated">
+              <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -159,7 +217,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               
-              <Card variant="elevated">
+              <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -174,7 +232,7 @@ const Dashboard = () => {
             </div>
 
             {/* Upload Section */}
-            <Card variant="data" className="border-2 border-dashed border-data-primary/30">
+            <Card className="border-2 border-dashed border-data-primary/30">
               <CardContent className="p-12 text-center">
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-gradient-hero rounded-2xl flex items-center justify-center mx-auto">
@@ -186,7 +244,25 @@ const Dashboard = () => {
                       Drag & drop your CSV file here, or click to browse and select
                     </p>
                   </div>
-                  <Button variant="hero">
+                  <Button 
+                    variant="default"
+                    className="bg-gradient-to-r from-primary to-data-secondary text-white"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.csv,.xlsx,.json';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          toast({
+                            title: "File Ready",
+                            description: `${file.name} selected for analysis`,
+                          });
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
                     Choose File
                   </Button>
                   <p className="text-sm text-muted-foreground">
@@ -204,7 +280,7 @@ const Dashboard = () => {
 
             {/* Recent Activity */}
             <div className="grid md:grid-cols-2 gap-6">
-              <Card variant="elevated">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
@@ -225,13 +301,22 @@ const Dashboard = () => {
                     <p className="text-xs text-muted-foreground mb-2">1 day ago</p>
                     <p className="text-sm">"Show me customer retention trends by region"</p>
                   </div>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      toast({
+                        title: "All Chats",
+                        description: "Loading all chat history...",
+                      });
+                    }}
+                  >
                     View All Chats
                   </Button>
                 </CardContent>
               </Card>
 
-              <Card variant="elevated">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Download className="w-5 h-5" />
@@ -247,7 +332,16 @@ const Dashboard = () => {
                       <p className="text-sm font-medium">Q4 Sales Report</p>
                       <p className="text-xs text-muted-foreground">Created 2 hours ago</p>
                     </div>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Downloading",
+                          description: "Q4 Sales Report is being downloaded...",
+                        });
+                      }}
+                    >
                       <Download className="w-4 h-4" />
                     </Button>
                   </div>
@@ -256,11 +350,29 @@ const Dashboard = () => {
                       <p className="text-sm font-medium">Marketing Dashboard</p>
                       <p className="text-xs text-muted-foreground">Created 1 day ago</p>
                     </div>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Downloading",
+                          description: "Marketing Dashboard is being downloaded...",
+                        });
+                      }}
+                    >
                       <Download className="w-4 h-4" />
                     </Button>
                   </div>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      toast({
+                        title: "All Dashboards",
+                        description: "Loading all saved dashboards...",
+                      });
+                    }}
+                  >
                     View All Dashboards
                   </Button>
                 </CardContent>
