@@ -131,12 +131,7 @@ const Dashboard = () => {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => {
-                    toast({
-                      title: "Create Dashboard",
-                      description: "Opening dashboard creator",
-                    });
-                  }}
+                  onClick={() => navigate("/dashboard/create")}
                 >
                   <BarChart3 className="w-4 h-4" />
                   Create Dashboard
