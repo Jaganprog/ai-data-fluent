@@ -14,6 +14,19 @@ export interface ChartResponse {
     [key: string]: any;
   };
   response?: string;
+  parsedData?: {
+    chartType: string;
+    dataStructure: {
+      columns: { name: string; type: string }[];
+      rows: any[];
+    };
+    insights: string[];
+    colorScheme: string[];
+    config: {
+      title: string;
+      [key: string]: any;
+    };
+  };
 }
 
 export const askGemini = async (prompt: string): Promise<GeminiResponse> => {
