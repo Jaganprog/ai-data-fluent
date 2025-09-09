@@ -181,7 +181,7 @@ const CreateDashboard = () => {
                       <div className="flex items-start space-x-3">
                         <Checkbox
                           checked={formData.widgets.includes(widget.id)}
-                          onCheckedChange={() => handleWidgetToggle(widget.id)}
+                          onChange={() => handleWidgetToggle(widget.id)}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
