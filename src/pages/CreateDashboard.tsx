@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft, 
   BarChart3, 
@@ -17,12 +18,20 @@ import {
   Users,
   DollarSign,
   Calendar,
-  Plus
+  Plus,
+  Upload,
+  FileText,
+  Loader2,
+  Sparkles,
+  Brain
 } from "lucide-react";
 
 const CreateDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiGeneratedConfig, setAiGeneratedConfig] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -47,6 +56,71 @@ const CreateDashboard = () => {
         ? prev.widgets.filter(id => id !== widgetId)
         : [...prev.widgets, widgetId]
     }));
+  };
+
+  const handleFileUpload = (file: File) => {
+    setSelectedFile(file);
+    toast({
+      title: "File Selected",
+      description: `${file.name} is ready for AI analysis`,
+    });
+  };
+
+  const analyzeDataWithAI = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a file first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      // Read file content
+      const fileContent = await selectedFile.text();
+      
+      // Call the analyze-data edge function
+      const { data, error } = await supabase.functions.invoke('analyze-data', {
+        body: {
+          fileContent,
+          fileName: selectedFile.name,
+          fileType: selectedFile.type || 'text/csv'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setAiGeneratedConfig(data.dashboardConfig);
+        
+        // Auto-populate form with AI suggestions
+        setFormData({
+          name: data.dashboardConfig.name,
+          description: data.dashboardConfig.description,
+          category: data.dashboardConfig.category,
+          widgets: data.dashboardConfig.widgets.map((w: any) => w.id),
+          layout: data.dashboardConfig.layout
+        });
+
+        toast({
+          title: "AI Analysis Complete!",
+          description: "Dashboard configuration generated from your data",
+        });
+      } else {
+        throw new Error(data.error || 'Analysis failed');
+      }
+    } catch (error) {
+      console.error('Error analyzing data:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze the data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -106,12 +180,143 @@ const CreateDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* AI Data Upload Section */}
+            <Card className="border-2 border-dashed border-primary/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-primary" />
+                  AI-Powered Dashboard Creation
+                </CardTitle>
+                <CardDescription>
+                  Upload your data file and let AI analyze it to create the perfect dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!selectedFile ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Upload className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Upload Your Data</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Upload CSV, Excel, or JSON files for AI analysis
+                    </p>
+                    <Button 
+                      type="button"
+                      variant="default"
+                      className="bg-gradient-to-r from-primary to-data-secondary"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.csv,.xlsx,.xls,.json';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            handleFileUpload(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Choose File
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                      <FileText className="w-8 h-8 text-primary" />
+                      <div className="flex-1">
+                        <p className="font-medium">{selectedFile.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedFile(null)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={analyzeDataWithAI}
+                        disabled={isAnalyzing}
+                        className="bg-gradient-to-r from-primary to-data-secondary flex-1"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Analyzing with AI...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Analyze with AI
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* AI Generated Insights */}
+            {aiGeneratedConfig && (
+              <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-data-secondary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    AI Analysis Results
+                  </CardTitle>
+                  <CardDescription>
+                    Based on your data, here's what AI recommends for your dashboard
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Recommended Metrics</h4>
+                      <div className="space-y-2">
+                        {aiGeneratedConfig.metrics?.map((metric: any, index: number) => (
+                          <div key={index} className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 bg-primary rounded-full"></span>
+                            {metric.title}: {metric.value}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Suggested Widgets</h4>
+                      <div className="space-y-2">
+                        {aiGeneratedConfig.widgets?.map((widget: any, index: number) => (
+                          <div key={index} className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 bg-data-secondary rounded-full"></span>
+                            {widget.title} ({widget.chartType})
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Dashboard Details</CardTitle>
                 <CardDescription>
-                  Set up the basic information for your new dashboard
+                  {aiGeneratedConfig ? 
+                    "Review and customize the AI-generated dashboard configuration" :
+                    "Set up the basic information for your new dashboard"
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -277,6 +482,19 @@ const CreateDashboard = () => {
               >
                 Cancel
               </Button>
+              {aiGeneratedConfig && (
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => navigate(`/dashboard/preview`, { 
+                    state: { dashboardConfig: aiGeneratedConfig }
+                  })}
+                  className="border-primary text-primary hover:bg-primary hover:text-white"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Preview AI Dashboard
+                </Button>
+              )}
               <Button type="submit" className="bg-gradient-to-r from-primary to-data-secondary">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Dashboard
