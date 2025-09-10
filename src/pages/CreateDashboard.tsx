@@ -181,14 +181,10 @@ const CreateDashboard = () => {
                         <div className="flex items-start space-x-3">
                           <Checkbox
                             checked={formData.widgets.includes(widget.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked !== formData.widgets.includes(widget.id)) {
-                                handleWidgetToggle(widget.id);
-                              }
-                            }}
+                            onCheckedChange={() => handleWidgetToggle(widget.id)}
                             onClick={(e) => e.stopPropagation()}
                           />
-                          <div className="flex-1" onClick={() => handleWidgetToggle(widget.id)}>
+                          <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <widget.icon className="w-5 h-5 text-primary" />
                               <h3 className="font-medium">{widget.name}</h3>
