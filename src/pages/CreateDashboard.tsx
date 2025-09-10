@@ -169,31 +169,36 @@ const CreateDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {availableWidgets.map((widget) => (
-                    <div
-                      key={widget.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50 ${
-                        formData.widgets.includes(widget.id) 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border'
-                      }`}
-                      onClick={() => handleWidgetToggle(widget.id)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <Checkbox
-                          checked={formData.widgets.includes(widget.id)}
-                          onCheckedChange={() => handleWidgetToggle(widget.id)}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <widget.icon className="w-5 h-5 text-primary" />
-                            <h3 className="font-medium">{widget.name}</h3>
+                      <div
+                        key={widget.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50 ${
+                          formData.widgets.includes(widget.id) 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border'
+                        }`}
+                        onClick={() => handleWidgetToggle(widget.id)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            checked={formData.widgets.includes(widget.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked !== formData.widgets.includes(widget.id)) {
+                                handleWidgetToggle(widget.id);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex-1" onClick={() => handleWidgetToggle(widget.id)}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <widget.icon className="w-5 h-5 text-primary" />
+                              <h3 className="font-medium">{widget.name}</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {widget.description}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {widget.description}
-                          </p>
                         </div>
                       </div>
-                    </div>
                   ))}
                 </div>
               </CardContent>
