@@ -121,12 +121,7 @@ const Dashboard = () => {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => {
-                    toast({
-                      title: "New Chat",
-                      description: "Starting a new AI conversation",
-                    });
-                  }}
+                  onClick={() => navigate("/dashboard/chat")}
                 >
                   <MessageSquare className="w-4 h-4" />
                   New Chat
