@@ -6,18 +6,13 @@ import {
   BarChart3, 
   Upload, 
   MessageSquare, 
-  Download, 
   FileText, 
-  TrendingUp,
-  Users,
-  DollarSign,
-  Calendar,
   Search,
   Plus,
   Bell,
-  Settings,
-  LogOut
+  Settings
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AskAI } from "@/components/AskAI";
 import { ChartGenerator } from "@/components/ChartGenerator";
@@ -52,6 +47,7 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Button 
               variant="ghost" 
               size="icon"
@@ -67,12 +63,7 @@ const Dashboard = () => {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => {
-                toast({
-                  title: "Settings",
-                  description: "Opening settings...",
-                });
-              }}
+              onClick={() => navigate("/dashboard/settings")}
             >
               <Settings className="w-5 h-5" />
             </Button>
@@ -137,92 +128,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Recent Datasets</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-smooth">
-                  <FileText className="w-4 h-4 text-data-primary" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">sales_q4_2024.csv</p>
-                    <p className="text-xs text-muted-foreground">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-smooth">
-                  <FileText className="w-4 h-4 text-data-primary" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">customer_data.csv</p>
-                    <p className="text-xs text-muted-foreground">1 day ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-smooth">
-                  <FileText className="w-4 h-4 text-data-primary" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">marketing_metrics.csv</p>
-                    <p className="text-xs text-muted-foreground">3 days ago</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Welcome Section */}
-            <div className="grid md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                      <p className="text-2xl font-bold">$127,490</p>
-                      <p className="text-xs text-accent">+12% from last month</p>
-                    </div>
-                    <DollarSign className="w-8 h-8 text-data-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Active Customers</p>
-                      <p className="text-2xl font-bold">2,847</p>
-                      <p className="text-xs text-accent">+5% this week</p>
-                    </div>
-                    <Users className="w-8 h-8 text-data-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Conversion Rate</p>
-                      <p className="text-2xl font-bold">3.24%</p>
-                      <p className="text-xs text-accent">+0.3% improvement</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-data-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Datasets</p>
-                      <p className="text-2xl font-bold">12</p>
-                      <p className="text-xs text-muted-foreground">3 active chats</p>
-                    </div>
-                    <FileText className="w-8 h-8 text-data-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Upload Section */}
             <Card className="border-2 border-dashed border-data-primary/30">
@@ -315,106 +224,6 @@ const Dashboard = () => {
               <ChartGenerator />
             </div>
 
-            {/* Recent Activity */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5" />
-                    Recent Chats
-                  </CardTitle>
-                  <CardDescription>
-                    Your latest AI conversations and insights
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-gradient-data rounded-lg border">
-                    <p className="text-sm font-medium mb-1">Sales Analysis Q4</p>
-                    <p className="text-xs text-muted-foreground mb-2">2 hours ago</p>
-                    <p className="text-sm">"What were our top performing products last quarter?"</p>
-                  </div>
-                  <div className="p-4 bg-gradient-data rounded-lg border">
-                    <p className="text-sm font-medium mb-1">Customer Insights</p>
-                    <p className="text-xs text-muted-foreground mb-2">1 day ago</p>
-                    <p className="text-sm">"Show me customer retention trends by region"</p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => {
-                      toast({
-                        title: "All Chats",
-                        description: "Loading all chat history...",
-                      });
-                    }}
-                  >
-                    View All Chats
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Download className="w-5 h-5" />
-                    Saved Dashboards
-                  </CardTitle>
-                  <CardDescription>
-                    Your exported dashboards and reports
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-data rounded-lg border">
-                    <div>
-                      <p className="text-sm font-medium">Q4 Sales Report</p>
-                      <p className="text-xs text-muted-foreground">Created 2 hours ago</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        toast({
-                          title: "Downloading",
-                          description: "Q4 Sales Report is being downloaded...",
-                        });
-                      }}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-data rounded-lg border">
-                    <div>
-                      <p className="text-sm font-medium">Marketing Dashboard</p>
-                      <p className="text-xs text-muted-foreground">Created 1 day ago</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        toast({
-                          title: "Downloading",
-                          description: "Marketing Dashboard is being downloaded...",
-                        });
-                      }}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => {
-                      toast({
-                        title: "All Dashboards",
-                        description: "Loading all saved dashboards...",
-                      });
-                    }}
-                  >
-                    View All Dashboards
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
           </div>
         </div>
       </div>

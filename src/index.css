@@ -111,6 +111,22 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom DataChat design tokens for dark mode */
+    --data-primary: 221 83% 60%;
+    --data-secondary: 187 85% 60%;
+    --data-dark: 222 47% 11%;
+    --data-light: 217 32% 17%;
+    
+    /* Dark mode gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(221 83% 60%), hsl(187 85% 60%));
+    --gradient-card: linear-gradient(145deg, hsl(222 84% 4.9%), hsl(217 32% 17%));
+    --gradient-data: linear-gradient(90deg, hsl(221 83% 60% / 0.15), hsl(187 85% 60% / 0.15));
+    
+    /* Dark mode shadows */
+    --shadow-data: 0 4px 20px hsl(221 83% 60% / 0.25);
+    --shadow-elegant: 0 8px 30px hsl(222 47% 11% / 0.3);
+    --shadow-glow: 0 0 40px hsl(187 85% 60% / 0.3);
   }
 }
 

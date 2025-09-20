@@ -7,8 +7,12 @@ import {
   Send, 
   ArrowLeft,
   Bot,
-  User
+  User,
+  Upload,
+  FileText,
+  X
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useNavigate } from "react-router-dom";
 import { askGemini } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +30,36 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileContent, setFileContent] = useState<string>("");
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      const content = await file.text();
+      setUploadedFile(file);
+      setFileContent(content);
+      toast({
+        title: "File Uploaded",
+        description: `${file.name} is now connected to the chat`,
+      });
+    } catch (error) {
+      console.error("Error reading file:", error);
+      toast({
+        title: "Error",
+        description: "Failed to read the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setFileContent("");
+    toast({
+      title: "File Removed",
+      description: "File disconnected from chat",
+    });
+  };
 
   const handleSendMessage = async () => {
     if (!currentMessage.trim() || isLoading) return;
@@ -42,7 +76,35 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      const response = await askGemini(currentMessage);
+      // Create enhanced prompt with file context if available
+      let enhancedPrompt = currentMessage;
+      if (uploadedFile && fileContent) {
+        // Parse CSV content for context
+        const lines = fileContent.split('\n').filter(line => line.trim());
+        if (lines.length > 1) {
+          const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+          const sampleData = lines.slice(1, 6).map(line => {
+            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+            const row: any = {};
+            headers.forEach((header, index) => {
+              row[header] = values[index] || '';
+            });
+            return row;
+          });
+          
+          enhancedPrompt = `Context: I have uploaded a data file (${uploadedFile.name}) with the following structure:
+          
+Headers: ${headers.join(', ')}
+Sample data (first 5 rows):
+${JSON.stringify(sampleData, null, 2)}
+
+User question: ${currentMessage}
+
+Please answer the user's question based on this data context.`;
+        }
+      }
+
+      const response = await askGemini(enhancedPrompt);
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -75,28 +137,70 @@ const Chat = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/40 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-semibold">AI Chat Assistant</h1>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate("/dashboard")}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-primary" />
+              <h1 className="text-xl font-semibold">AI Chat Assistant</h1>
+            </div>
           </div>
+          <ThemeToggle />
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <Card className="h-[calc(100vh-200px)] flex flex-col">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-primary" />
-              Chat with AI
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5 text-primary" />
+                Chat with AI
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {uploadedFile ? (
+                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <FileText className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700">{uploadedFile.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveFile}
+                      className="h-6 w-6 p-0 hover:bg-green-100"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.csv,.xlsx,.xls,.json';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          handleFileUpload(file);
+                        }
+                      };
+                      input.click();
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Data
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           
           <CardContent className="flex-1 flex flex-col">
@@ -106,7 +210,12 @@ const Chat = () => {
                 <div className="text-center text-muted-foreground py-8">
                   <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>Start a conversation with the AI assistant</p>
-                  <p className="text-sm mt-2">Ask questions about your data, request analysis, or get insights</p>
+                  <p className="text-sm mt-2">
+                    {uploadedFile 
+                      ? `Ask questions about your data file: ${uploadedFile.name}`
+                      : "Upload a data file to ask questions about it, or ask general questions"
+                    }
+                  </p>
                 </div>
               ) : (
                 messages.map((message) => (
