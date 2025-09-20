@@ -16,7 +16,6 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AskAI } from "@/components/AskAI";
 import { ChartGenerator } from "@/components/ChartGenerator";
-import { SupabaseTest } from "@/components/SupabaseTest";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -223,11 +222,6 @@ const Dashboard = () => {
             <div className="grid md:grid-cols-2 gap-6">
               <AskAI />
               <ChartGenerator />
-            </div>
-
-            {/* Supabase Test - Remove this after testing */}
-            <div className="flex justify-center">
-              <SupabaseTest />
             </div>
 
           </div>
