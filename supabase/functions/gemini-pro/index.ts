@@ -1,7 +1,10 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.2';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, type = 'general' } = await req.json();
+    const { prompt, type = 'general', datasetId } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), {
@@ -33,6 +36,40 @@ serve(async (req) => {
     }
 
     let systemPrompt = '';
+    let dataContext = '';
+    
+    // If datasetId is provided, fetch the dataset information
+    if (datasetId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        const { data: dataset, error: datasetError } = await supabase
+          .from('datasets')
+          .select('*')
+          .eq('id', datasetId)
+          .single();
+        
+        if (!datasetError && dataset) {
+          // Fetch the actual file data if available
+          if (dataset.file_path) {
+            const { data: fileData, error: fileError } = await supabase.storage
+              .from('datasets')
+              .download(dataset.file_path);
+            
+            if (!fileError && fileData) {
+              const text = await fileData.text();
+              // Limit the data to first 100 lines for context
+              const lines = text.split('\n').slice(0, 100);
+              dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nData Preview (first 100 rows):\n${lines.join('\n')}`;
+            }
+          } else {
+            dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dataset:', error);
+      }
+    }
     
     if (type === 'chart') {
       systemPrompt = `You are a data visualization expert. Based on the user's request, provide specific recommendations for creating charts.
@@ -55,7 +92,7 @@ Return your response as valid JSON with these exact fields:
 
 Create sample data that matches the user's request with at least 4-5 data points.`;
     } else {
-      systemPrompt = 'You are a helpful AI assistant. Provide clear, concise, and accurate responses to user questions.';
+      systemPrompt = `You are a helpful AI assistant specialized in data analysis. Provide clear, concise, and accurate responses.${dataContext ? '\n\nYou have access to the following dataset information:' + dataContext : ''}`;
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

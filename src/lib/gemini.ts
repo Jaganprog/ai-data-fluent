@@ -29,9 +29,13 @@ export interface ChartResponse {
   };
 }
 
-export const askGemini = async (prompt: string): Promise<GeminiResponse> => {
+export const askGemini = async (prompt: string, datasetId?: string): Promise<GeminiResponse> => {
   const { data, error } = await supabase.functions.invoke('gemini-pro', {
-    body: { prompt, type: 'general' }
+    body: { 
+      prompt, 
+      type: 'general',
+      datasetId 
+    }
   });
 
   if (error) {

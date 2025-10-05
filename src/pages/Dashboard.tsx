@@ -10,7 +10,8 @@ import {
   Search,
   Plus,
   Bell,
-  Settings
+  Settings,
+  Loader2
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AskAI } from "@/components/AskAI";
@@ -18,11 +19,64 @@ import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { ChartGenerator } from "@/components/ChartGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload file to storage
+      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('datasets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Read file content to get basic info
+      const text = await file.text();
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+      
+      // Create dataset record
+      const { error: dbError } = await supabase
+        .from('datasets')
+        .insert({
+          user_id: user.id,
+          name: file.name,
+          file_path: filePath,
+          row_count: lines.length - 1,
+          columns: headers.map(name => ({ name, type: 'string' })),
+          status: 'uploaded'
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Upload Complete",
+        description: `${file.name} uploaded successfully. You can now query it with AI!`,
+      });
+      
+      setSelectedFile(null);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation */}
@@ -202,15 +256,17 @@ const Dashboard = () => {
                       <Button 
                         variant="default"
                         className="bg-gradient-to-r from-primary to-data-secondary text-white"
-                        onClick={() => {
-                          toast({
-                            title: "Upload Started",
-                            description: `Uploading ${selectedFile.name}...`,
-                          });
-                          // Here you would handle the actual upload
-                        }}
+                        onClick={() => handleFileUpload(selectedFile)}
+                        disabled={isUploading}
                       >
-                        Start Upload
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          'Start Upload'
+                        )}
                       </Button>
                     </div>
                   </div>
