@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,57 +24,78 @@ serve(async (req) => {
       });
     }
 
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
+      return new Response(JSON.stringify({ error: 'AI service not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     let systemPrompt = '';
     
     if (type === 'chart') {
-      systemPrompt = `You are a data visualization expert. Based on the user's request, provide specific recommendations for:
-1. Chart type (bar, line, pie, scatter, etc.)
-2. Data structure needed
-3. Key insights to highlight
-4. Color scheme suggestions
-5. Axis labels and titles
+      systemPrompt = `You are a data visualization expert. Based on the user's request, provide specific recommendations for creating charts.
 
-Format your response as JSON with these fields:
-- chartType: string
-- dataStructure: object
-- insights: array of strings
-- colorScheme: array of hex colors
-- config: object with axis labels, title, etc.`;
+Return your response as valid JSON with these exact fields:
+{
+  "chartType": "bar|line|pie|scatter",
+  "dataStructure": {
+    "columns": [{"name": "string", "type": "string|number"}],
+    "rows": [{"key": "value"}]
+  },
+  "insights": ["insight 1", "insight 2"],
+  "colorScheme": ["#8884d8", "#82ca9d", "#ffc658"],
+  "config": {
+    "title": "Chart Title",
+    "xAxisLabel": "X Axis",
+    "yAxisLabel": "Y Axis"
+  }
+}
+
+Create sample data that matches the user's request with at least 4-5 data points.`;
     } else {
       systemPrompt = 'You are a helpful AI assistant. Provide clear, concise, and accurate responses to user questions.';
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: systemPrompt },
-              { text: prompt }
-            ]
-          }
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
         ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('Lovable AI error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const data = await response.json();
-    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+    const generatedText = data.choices?.[0]?.message?.content || 'No response generated';
 
     let result;
     if (type === 'chart') {
@@ -86,7 +107,18 @@ Format your response as JSON with these fields:
         result = {
           response: generatedText,
           chartType: 'bar',
-          dataStructure: {},
+          dataStructure: {
+            columns: [
+              { name: "category", type: "string" },
+              { name: "value", type: "number" }
+            ],
+            rows: [
+              { category: "Sample A", value: 100 },
+              { category: "Sample B", value: 80 },
+              { category: "Sample C", value: 120 },
+              { category: "Sample D", value: 90 }
+            ]
+          },
           insights: ['Review the response for chart recommendations'],
           colorScheme: ['#8884d8', '#82ca9d', '#ffc658'],
           config: { title: 'Chart Analysis' }
