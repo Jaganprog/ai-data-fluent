@@ -46,11 +46,12 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button 
               variant="ghost" 
               size="icon"
+              className="hover:bg-primary/10"
               onClick={() => {
                 toast({
                   title: "Notifications",
@@ -63,12 +64,13 @@ const Dashboard = () => {
             <Button 
               variant="ghost" 
               size="icon"
+              className="hover:bg-primary/10"
               onClick={() => navigate("/dashboard/settings")}
             >
               <Settings className="w-5 h-5" />
             </Button>
-            <Avatar>
-              <AvatarFallback className="bg-gradient-hero text-white">JD</AvatarFallback>
+            <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
+              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">JD</AvatarFallback>
             </Avatar>
           </div>
         </div>

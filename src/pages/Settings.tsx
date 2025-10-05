@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft,
-  Settings,
+  Settings as SettingsIcon,
   User,
   Bell,
   Shield,
@@ -85,7 +85,7 @@ const Settings = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <Settings className="w-6 h-6 text-primary" />
+            <SettingsIcon className="w-6 h-6 text-primary" />
             <h1 className="text-xl font-semibold">Settings</h1>
           </div>
         </div>
