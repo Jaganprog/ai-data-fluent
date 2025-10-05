@@ -13,8 +13,8 @@ import {
   Settings
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AskAI } from "@/components/AskAI";
+import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { ChartGenerator } from "@/components/ChartGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -69,9 +69,7 @@ const Dashboard = () => {
             >
               <Settings className="w-5 h-5" />
             </Button>
-            <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
-              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">JD</AvatarFallback>
-            </Avatar>
+            <UserProfileMenu />
           </div>
         </div>
       </nav>
