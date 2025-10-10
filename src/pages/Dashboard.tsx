@@ -34,8 +34,6 @@ const Dashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      console.log('Starting file upload:', file.name);
-
       // Upload file to storage
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
@@ -43,7 +41,6 @@ const Dashboard = () => {
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
-      console.log('File uploaded to storage:', filePath);
 
       // Parse file to get metadata
       let headers: string[] = [];
@@ -69,49 +66,32 @@ const Dashboard = () => {
         if (jsonData.length > 0) {
           // Clean headers - remove any non-printable characters and ensure they're valid strings
           headers = jsonData[0]
-            .map((h: any) => {
-              if (h === null || h === undefined) return '';
+            .map(h => {
+              if (h === null || h === undefined) return 'Column';
               const str = String(h).trim();
-              // Remove any control characters, null bytes, and non-ASCII characters
-              return str.replace(/[^\x20-\x7E]/g, '').trim();
+              // Remove any control characters or null bytes
+              return str.replace(/[\x00-\x1F\x7F]/g, '') || 'Column';
             })
-            .filter((h: string) => h.length > 0);
-          
-          // If no valid headers, use generic ones
-          if (headers.length === 0) {
-            headers = ['Column1', 'Column2', 'Column3'];
-          }
-          
+            .filter(h => h.length > 0);
           rowCount = jsonData.length - 1;
-          console.log('Excel parsed:', { headers, rowCount });
         }
       } else {
         throw new Error('Unsupported file format. Please upload CSV or Excel files.');
       }
       
       // Create dataset record
-      const datasetRecord = {
-        user_id: user.id,
-        name: file.name,
-        file_path: filePath,
-        row_count: rowCount,
-        columns: headers.map(name => ({ name, type: 'string' })),
-        status: 'uploaded' as const
-      };
-      
-      console.log('Inserting dataset record:', datasetRecord);
-      
-      const { data: insertedData, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from('datasets')
-        .insert(datasetRecord)
-        .select();
+        .insert({
+          user_id: user.id,
+          name: file.name,
+          file_path: filePath,
+          row_count: rowCount,
+          columns: headers.map(name => ({ name, type: 'string' })),
+          status: 'uploaded'
+        });
 
-      if (dbError) {
-        console.error('Database insert error:', dbError);
-        throw dbError;
-      }
-
-      console.log('Dataset record created:', insertedData);
+      if (dbError) throw dbError;
 
       toast({
         title: "Upload Complete",
@@ -119,15 +99,11 @@ const Dashboard = () => {
       });
       
       setSelectedFile(null);
-      
-      // Reload datasets in AskAI component
-      window.location.reload();
-      
     } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error.message || 'Failed to upload file',
+        description: error.message,
         variant: "destructive",
       });
     } finally {
