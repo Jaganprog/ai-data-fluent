@@ -64,15 +64,7 @@ const Dashboard = () => {
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
         
         if (jsonData.length > 0) {
-          // Clean headers - remove any non-printable characters and ensure they're valid strings
-          headers = jsonData[0]
-            .map(h => {
-              if (h === null || h === undefined) return 'Column';
-              const str = String(h).trim();
-              // Remove any control characters or null bytes
-              return str.replace(/[\x00-\x1F\x7F]/g, '') || 'Column';
-            })
-            .filter(h => h.length > 0);
+          headers = jsonData[0].map(h => String(h || '').trim());
           rowCount = jsonData.length - 1;
         }
       } else {
@@ -173,13 +165,13 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                 <Button 
+                <Button 
                   variant="default" 
                   className="w-full justify-start bg-gradient-to-r from-primary to-data-secondary"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
-                    input.accept = '.csv,.xlsx,.xls';
+                    input.accept = '.csv';
                     input.onchange = (e) => {
                       const file = (e.target as HTMLInputElement).files?.[0];
                       if (file) {
@@ -194,7 +186,7 @@ const Dashboard = () => {
                   }}
                 >
                   <Upload className="w-4 h-4" />
-                  Upload Data
+                  Upload CSV
                 </Button>
                 <Button 
                   variant="outline" 
@@ -234,13 +226,13 @@ const Dashboard = () => {
                         Drag & drop your CSV file here, or click to browse and select
                       </p>
                     </div>
-                     <Button 
+                    <Button 
                       variant="default"
                       className="bg-gradient-to-r from-primary to-data-secondary text-white"
                       onClick={() => {
                         const input = document.createElement('input');
                         input.type = 'file';
-                        input.accept = '.csv,.xlsx,.xls';
+                        input.accept = '.csv,.xlsx,.json';
                         input.onchange = (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
                           if (file) {
@@ -257,7 +249,7 @@ const Dashboard = () => {
                       Choose File
                     </Button>
                     <p className="text-sm text-muted-foreground">
-                      Supports CSV and Excel files up to 100MB
+                      Supports CSV files up to 100MB
                     </p>
                   </div>
                 ) : (

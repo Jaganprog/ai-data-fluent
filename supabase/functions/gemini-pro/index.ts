@@ -58,17 +58,11 @@ serve(async (req) => {
                 .download(dataset.file_path);
               
               if (!fileError && fileData) {
-                const fileExtension = dataset.file_path.split('.').pop()?.toLowerCase();
-                
-                if (fileExtension === 'csv') {
-                  // Parse CSV
-                  const text = await fileData.text();
-                  const lines = text.split('\n').slice(0, 100).filter(line => line.trim());
-                  dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nData Preview (first 100 rows):\n${lines.join('\n')}`;
-                } else {
-                  // For Excel files, just use metadata
-                  dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nNote: This is an Excel file. I can answer questions about the data structure and provide insights based on the column names and row count.`;
-                }
+                // Try to read as text (for CSV files)
+                const text = await fileData.text();
+                // Limit the data to first 100 lines for context
+                const lines = text.split('\n').slice(0, 100).filter(line => line.trim());
+                dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nData Preview (first 100 rows):\n${lines.join('\n')}`;
               }
             } catch (parseError) {
               console.error('Error parsing file data:', parseError);
