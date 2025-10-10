@@ -20,6 +20,8 @@ serve(async (req) => {
   try {
     const { prompt, type = 'general', datasetId } = await req.json();
 
+    console.log('Received request:', { prompt: prompt?.substring(0, 50), type, datasetId });
+
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), {
         status: 400,
@@ -40,6 +42,7 @@ serve(async (req) => {
     
     // If datasetId is provided, fetch the dataset information
     if (datasetId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      console.log('Fetching dataset:', datasetId);
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         
@@ -49,9 +52,12 @@ serve(async (req) => {
           .eq('id', datasetId)
           .single();
         
+        console.log('Dataset fetch result:', { dataset: dataset?.name, error: datasetError });
+        
         if (!datasetError && dataset) {
           // Fetch the actual file data if available
         if (dataset.file_path) {
+            console.log('Downloading file:', dataset.file_path);
             try {
               const { data: fileData, error: fileError } = await supabase.storage
                 .from('datasets')
@@ -65,10 +71,14 @@ serve(async (req) => {
                   const text = await fileData.text();
                   const lines = text.split('\n').slice(0, 100).filter(line => line.trim());
                   dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nData Preview (first 100 rows):\n${lines.join('\n')}`;
+                  console.log('CSV data loaded, preview length:', lines.length);
                 } else {
                   // For Excel files, just use metadata
                   dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nNote: This is an Excel file. I can answer questions about the data structure and provide insights based on the column names and row count.`;
+                  console.log('Excel metadata loaded');
                 }
+              } else {
+                console.error('File download error:', fileError);
               }
             } catch (parseError) {
               console.error('Error parsing file data:', parseError);
@@ -82,6 +92,8 @@ serve(async (req) => {
       } catch (error) {
         console.error('Error fetching dataset:', error);
       }
+    } else {
+      console.log('No dataset selected or missing Supabase config');
     }
     
     if (type === 'chart') {
