@@ -20,6 +20,7 @@ import { ChartGenerator } from "@/components/ChartGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from 'xlsx';
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -41,10 +42,34 @@ const Dashboard = () => {
 
       if (uploadError) throw uploadError;
 
-      // Read file content to get basic info
-      const text = await file.text();
-      const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
+      // Parse file to get metadata
+      let headers: string[] = [];
+      let rowCount = 0;
+
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      
+      if (fileExtension === 'csv') {
+        // Parse CSV
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
+        if (lines.length > 0) {
+          headers = lines[0].split(',').map(h => h.trim());
+          rowCount = lines.length - 1;
+        }
+      } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Parse Excel
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+        
+        if (jsonData.length > 0) {
+          headers = jsonData[0].map(h => String(h || '').trim());
+          rowCount = jsonData.length - 1;
+        }
+      } else {
+        throw new Error('Unsupported file format. Please upload CSV or Excel files.');
+      }
       
       // Create dataset record
       const { error: dbError } = await supabase
@@ -53,7 +78,7 @@ const Dashboard = () => {
           user_id: user.id,
           name: file.name,
           file_path: filePath,
-          row_count: lines.length - 1,
+          row_count: rowCount,
           columns: headers.map(name => ({ name, type: 'string' })),
           status: 'uploaded'
         });
@@ -62,7 +87,7 @@ const Dashboard = () => {
 
       toast({
         title: "Upload Complete",
-        description: `${file.name} uploaded successfully. You can now query it with AI!`,
+        description: `${file.name} uploaded successfully with ${rowCount} rows. You can now query it with AI!`,
       });
       
       setSelectedFile(null);
