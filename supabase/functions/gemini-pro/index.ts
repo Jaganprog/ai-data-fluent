@@ -51,23 +51,16 @@ serve(async (req) => {
         
         if (!datasetError && dataset) {
           // Fetch the actual file data if available
-        if (dataset.file_path) {
-            try {
-              const { data: fileData, error: fileError } = await supabase.storage
-                .from('datasets')
-                .download(dataset.file_path);
-              
-              if (!fileError && fileData) {
-                // Try to read as text (for CSV files)
-                const text = await fileData.text();
-                // Limit the data to first 100 lines for context
-                const lines = text.split('\n').slice(0, 100).filter(line => line.trim());
-                dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nData Preview (first 100 rows):\n${lines.join('\n')}`;
-              }
-            } catch (parseError) {
-              console.error('Error parsing file data:', parseError);
-              // Fallback to just metadata
-              dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nNote: Full data preview unavailable, but I can answer questions about the dataset structure.`;
+          if (dataset.file_path) {
+            const { data: fileData, error: fileError } = await supabase.storage
+              .from('datasets')
+              .download(dataset.file_path);
+            
+            if (!fileError && fileData) {
+              const text = await fileData.text();
+              // Limit the data to first 100 lines for context
+              const lines = text.split('\n').slice(0, 100);
+              dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}\n\nData Preview (first 100 rows):\n${lines.join('\n')}`;
             }
           } else {
             dataContext = `\n\nDataset: ${dataset.name}\nRows: ${dataset.row_count}\nColumns: ${JSON.stringify(dataset.columns)}`;
