@@ -80,9 +80,18 @@ Format your response as JSON with these fields:
         
         // Parse the JSON
         const parsed = JSON.parse(jsonText);
+        
+        // Extract chart data from dataStructure.example if it exists
+        let chartData = [];
+        if (parsed.dataStructure?.example) {
+          chartData = parsed.dataStructure.example;
+        }
+        
         result = {
-          chartType: parsed.chartType?.toLowerCase() || 'bar',
-          dataStructure: parsed.dataStructure || {},
+          chartType: parsed.chartType?.toLowerCase().replace(' chart', '').trim() || 'bar',
+          dataStructure: {
+            rows: chartData
+          },
           insights: parsed.insights || [],
           colorScheme: parsed.colorScheme || ['#8884d8', '#82ca9d', '#ffc658'],
           config: parsed.config || { title: 'Chart Analysis' },
@@ -94,7 +103,7 @@ Format your response as JSON with these fields:
         result = {
           response: generatedText,
           chartType: 'bar',
-          dataStructure: {},
+          dataStructure: { rows: [] },
           insights: ['Review the response for chart recommendations'],
           colorScheme: ['#8884d8', '#82ca9d', '#ffc658'],
           config: { title: 'Chart Analysis' }

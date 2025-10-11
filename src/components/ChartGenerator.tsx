@@ -26,73 +26,8 @@ export const ChartGenerator = () => {
     setIsLoading(true);
     try {
       const result = await generateChart(prompt);
-      console.log("Raw result from generateChart:", result);
-      
-      // Try to parse JSON from the response if it exists
-      let parsedConfig = result;
-      if (result.response) {
-        try {
-          // Try multiple patterns to extract JSON
-          let jsonMatch = result.response.match(/```json\n([\s\S]*?)\n```/);
-          if (!jsonMatch) {
-            jsonMatch = result.response.match(/```\n([\s\S]*?)\n```/);
-          }
-          if (!jsonMatch) {
-            // Try to find JSON object directly in response
-            const jsonStart = result.response.indexOf('{');
-            const jsonEnd = result.response.lastIndexOf('}');
-            if (jsonStart !== -1 && jsonEnd !== -1) {
-              const jsonStr = result.response.substring(jsonStart, jsonEnd + 1);
-              const parsed = JSON.parse(jsonStr);
-              parsedConfig = {
-                ...result,
-                ...parsed,
-                parsedData: parsed
-              };
-            }
-          } else {
-            const parsed = JSON.parse(jsonMatch[1]);
-            parsedConfig = {
-              ...result,
-              ...parsed,
-              parsedData: parsed
-            };
-          }
-          console.log("Successfully parsed chart config:", parsedConfig);
-        } catch (e) {
-          console.log("Could not parse JSON from response:", e);
-          console.log("Response content:", result.response);
-          
-          // Create a fallback chart with sample data based on the prompt
-          const fallbackData = {
-            chartType: "bar",
-            dataStructure: {
-              columns: [
-                { name: "category", type: "string" },
-                { name: "value", type: "number" }
-              ],
-              rows: [
-                { category: "Sample A", value: 100 },
-                { category: "Sample B", value: 80 },
-                { category: "Sample C", value: 120 },
-                { category: "Sample D", value: 90 }
-              ]
-            },
-            insights: ["Chart generated from your prompt: " + prompt],
-            colorScheme: ["#8884d8", "#82ca9d", "#ffc658"],
-            config: {
-              title: "Generated Chart"
-            }
-          };
-          
-          parsedConfig = {
-            ...result,
-            parsedData: fallbackData
-          };
-        }
-      }
-      
-      setChartConfig(parsedConfig);
+      console.log("Chart result:", result);
+      setChartConfig(result);
       toast({
         title: "Chart Generated Successfully!",
         description: "Your chart has been created and is ready to view.",
@@ -116,14 +51,15 @@ export const ChartGenerator = () => {
     }
   };
 
-  const renderChart = (config: any) => {
-    if (!config.parsedData?.dataStructure?.rows || config.parsedData.dataStructure.rows.length === 0) {
+  const renderChart = (config: ChartResponse) => {
+    // Use dataStructure.rows directly from the API response
+    const data = config.dataStructure?.rows || [];
+    if (!data || data.length === 0) {
       return null;
     }
 
-    const data = config.parsedData.dataStructure.rows;
-    const chartType = config.parsedData.chartType || config.chartType;
-    const colors = config.parsedData.colorScheme || config.colorScheme || ['#8884d8', '#82ca9d', '#ffc658'];
+    const chartType = config.chartType || 'bar';
+    const colors = config.colorScheme || ['#8884d8', '#82ca9d', '#ffc658'];
     
     // Create chart configuration for shadcn
     const chartConfig = {
@@ -244,72 +180,61 @@ export const ChartGenerator = () => {
           </Button>
         </div>
         
-        {chartConfig && (
+        {chartConfig && chartConfig.dataStructure?.rows && chartConfig.dataStructure.rows.length > 0 && (
           <div className="mt-4 space-y-4">
             {/* Chart Visualization */}
-            {chartConfig.parsedData && (
-              <div className="p-4 bg-muted rounded-lg">
-                <h3 className="font-semibold mb-4">Generated Chart:</h3>
-                {renderChart(chartConfig)}
-              </div>
-            )}
+            <div className="p-6 bg-card rounded-lg border">
+              <h3 className="font-semibold mb-4 text-foreground">Generated Chart:</h3>
+              {renderChart(chartConfig)}
+            </div>
             
             {/* Chart Recommendations */}
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-semibold mb-2">Chart Recommendations:</h3>
+            <div className="p-6 bg-card rounded-lg border space-y-4">
+              <h3 className="font-semibold text-foreground">Chart Recommendations:</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-sm mb-1">Chart Type:</h4>
-                  <p className="text-sm capitalize bg-background p-2 rounded">
-                    {chartConfig.parsedData?.chartType || chartConfig.chartType}
+                  <h4 className="font-medium text-sm mb-2 text-muted-foreground">Chart Type:</h4>
+                  <p className="text-sm capitalize bg-accent/50 p-3 rounded">
+                    {chartConfig.chartType}
                   </p>
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-sm mb-1">Title:</h4>
-                  <p className="text-sm bg-background p-2 rounded">
-                    {chartConfig.parsedData?.config?.title || chartConfig.config?.title || "Chart Analysis"}
+                  <h4 className="font-medium text-sm mb-2 text-muted-foreground">Title:</h4>
+                  <p className="text-sm bg-accent/50 p-3 rounded">
+                    {chartConfig.config?.title || "Chart Analysis"}
                   </p>
                 </div>
               </div>
 
-              {(chartConfig.parsedData?.insights || chartConfig.insights) && (
-                <div className="mt-4">
-                  <h4 className="font-medium text-sm mb-2">Key Insights:</h4>
-                  <ul className="text-sm space-y-1">
-                    {(chartConfig.parsedData?.insights || chartConfig.insights).map((insight: string, index: number) => (
+              {chartConfig.insights && chartConfig.insights.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-sm mb-2 text-muted-foreground">Key Insights:</h4>
+                  <ul className="text-sm space-y-2">
+                    {chartConfig.insights.map((insight: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
-                        {insight}
+                        <span className="text-primary mt-1">•</span>
+                        <span>{insight}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {(chartConfig.parsedData?.colorScheme || chartConfig.colorScheme) && (
-                <div className="mt-4">
-                  <h4 className="font-medium text-sm mb-2">Color Scheme:</h4>
-                  <div className="flex gap-2">
-                    {(chartConfig.parsedData?.colorScheme || chartConfig.colorScheme).map((color: string, index: number) => (
+              {chartConfig.colorScheme && chartConfig.colorScheme.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-sm mb-2 text-muted-foreground">Color Scheme:</h4>
+                  <div className="flex gap-2 flex-wrap">
+                    {chartConfig.colorScheme.map((color: string, index: number) => (
                       <div
                         key={index}
-                        className="w-8 h-8 rounded border-2 border-background"
+                        className="w-10 h-10 rounded border border-border"
                         style={{ backgroundColor: color }}
                         title={color}
                       />
                     ))}
                   </div>
-                </div>
-              )}
-
-              {chartConfig.response && !chartConfig.parsedData && (
-                <div className="mt-4">
-                  <h4 className="font-medium text-sm mb-2">Additional Details:</h4>
-                  <p className="text-sm whitespace-pre-wrap bg-background p-2 rounded">
-                    {chartConfig.response}
-                  </p>
                 </div>
               )}
             </div>
