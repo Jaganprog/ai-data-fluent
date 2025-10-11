@@ -71,9 +71,25 @@ Format your response as JSON with these fields:
     let result;
     if (type === 'chart') {
       try {
-        // Try to parse as JSON for chart responses
-        result = JSON.parse(generatedText);
-      } catch {
+        // Extract JSON from markdown code blocks if present
+        let jsonText = generatedText;
+        const jsonMatch = generatedText.match(/```(?:json)?\s*\n([\s\S]*?)\n```/);
+        if (jsonMatch) {
+          jsonText = jsonMatch[1];
+        }
+        
+        // Parse the JSON
+        const parsed = JSON.parse(jsonText);
+        result = {
+          chartType: parsed.chartType?.toLowerCase() || 'bar',
+          dataStructure: parsed.dataStructure || {},
+          insights: parsed.insights || [],
+          colorScheme: parsed.colorScheme || ['#8884d8', '#82ca9d', '#ffc658'],
+          config: parsed.config || { title: 'Chart Analysis' },
+          response: generatedText
+        };
+      } catch (error) {
+        console.error('Failed to parse chart response:', error);
         // If not valid JSON, return as text with default chart config
         result = {
           response: generatedText,
