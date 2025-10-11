@@ -222,8 +222,8 @@ const Dashboard = () => {
 
             {/* AI Features */}
             <div className="grid md:grid-cols-2 gap-6">
-              <AskAI />
-              <ChartGenerator />
+              <AskAI uploadedFile={selectedFile} />
+              <ChartGenerator uploadedFile={selectedFile} />
             </div>
 
           </div>

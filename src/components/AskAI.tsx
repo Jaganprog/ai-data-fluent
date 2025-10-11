@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +6,30 @@ import { Sparkles, Send, Loader2 } from "lucide-react";
 import { askGemini } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 
-export const AskAI = () => {
+interface AskAIProps {
+  uploadedFile?: File | null;
+}
+
+export const AskAI = ({ uploadedFile }: AskAIProps) => {
   const [question, setQuestion] = useState("");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [fileData, setFileData] = useState<string>("");
   const { toast } = useToast();
+
+  // Parse CSV when file is uploaded
+  useEffect(() => {
+    if (uploadedFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        setFileData(text);
+      };
+      reader.readAsText(uploadedFile);
+    } else {
+      setFileData("");
+    }
+  }, [uploadedFile]);
 
   const handleAsk = async () => {
     if (!question.trim()) {
@@ -23,7 +42,13 @@ export const AskAI = () => {
 
     setIsLoading(true);
     try {
-      const result = await askGemini(question);
+      let enhancedPrompt = question;
+      
+      if (fileData && uploadedFile) {
+        enhancedPrompt = `Context: I have uploaded a CSV file named "${uploadedFile.name}". Here is the data:\n\n${fileData.substring(0, 5000)}\n\nQuestion: ${question}`;
+      }
+      
+      const result = await askGemini(enhancedPrompt);
       setResponse(result.response);
       toast({
         title: "AI Response Generated",
@@ -54,6 +79,11 @@ export const AskAI = () => {
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           Ask AI
+          {uploadedFile && (
+            <span className="text-xs font-normal text-muted-foreground">
+              • {uploadedFile.name}
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +8,30 @@ import { generateChart, ChartResponse } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
-export const ChartGenerator = () => {
+interface ChartGeneratorProps {
+  uploadedFile?: File | null;
+}
+
+export const ChartGenerator = ({ uploadedFile }: ChartGeneratorProps) => {
   const [prompt, setPrompt] = useState("");
   const [chartConfig, setChartConfig] = useState<ChartResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [fileData, setFileData] = useState<string>("");
   const { toast } = useToast();
+
+  // Parse CSV when file is uploaded
+  useEffect(() => {
+    if (uploadedFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        setFileData(text);
+      };
+      reader.readAsText(uploadedFile);
+    } else {
+      setFileData("");
+    }
+  }, [uploadedFile]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -25,7 +44,13 @@ export const ChartGenerator = () => {
 
     setIsLoading(true);
     try {
-      const result = await generateChart(prompt);
+      let enhancedPrompt = prompt;
+      
+      if (fileData && uploadedFile) {
+        enhancedPrompt = `Context: I have uploaded a CSV file named "${uploadedFile.name}". Here is the data:\n\n${fileData.substring(0, 5000)}\n\nChart Request: ${prompt}\n\nPlease analyze this data and create a chart based on it.`;
+      }
+      
+      const result = await generateChart(enhancedPrompt);
       console.log("Chart result:", result);
       setChartConfig(result);
       toast({
@@ -156,6 +181,11 @@ export const ChartGenerator = () => {
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
           Chart Generator
+          {uploadedFile && (
+            <span className="text-xs font-normal text-muted-foreground">
+              • {uploadedFile.name}
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
