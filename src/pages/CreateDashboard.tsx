@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from 'xlsx';
 import { 
   ArrowLeft, 
   BarChart3, 
@@ -78,8 +79,24 @@ const CreateDashboard = () => {
 
     setIsAnalyzing(true);
     try {
-      // Read file content
-      const fileContent = await selectedFile.text();
+      // Read file content (handle both CSV and Excel)
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+      const isExcel = fileExtension === 'xlsx' || fileExtension === 'xls';
+      
+      let fileContent: string;
+      
+      if (isExcel) {
+        // Parse Excel file
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        fileContent = XLSX.utils.sheet_to_csv(worksheet);
+      } else {
+        // Parse as plain text (CSV)
+        fileContent = await selectedFile.text();
+      }
       
       // Call the analyze-data edge function
       const { data, error } = await supabase.functions.invoke('analyze-data', {
