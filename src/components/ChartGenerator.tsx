@@ -7,6 +7,7 @@ import { BarChart3, Send, Loader2 } from "lucide-react";
 import { generateChart, ChartResponse } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import * as XLSX from 'xlsx';
 
 interface ChartGeneratorProps {
   uploadedFile?: File | null;
@@ -19,19 +20,44 @@ export const ChartGenerator = ({ uploadedFile }: ChartGeneratorProps) => {
   const [fileData, setFileData] = useState<string>("");
   const { toast } = useToast();
 
-  // Parse CSV when file is uploaded
+  // Parse CSV or Excel when file is uploaded
   useEffect(() => {
     if (uploadedFile) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const text = e.target?.result as string;
-        setFileData(text);
+        const data = e.target?.result;
+        
+        // Check if it's an Excel file
+        if (uploadedFile.name.endsWith('.xlsx') || uploadedFile.name.endsWith('.xls')) {
+          try {
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const csvText = XLSX.utils.sheet_to_csv(firstSheet);
+            setFileData(csvText);
+          } catch (error) {
+            console.error("Error parsing Excel file:", error);
+            toast({
+              title: "Error parsing Excel file",
+              description: "Please ensure the file is a valid Excel file",
+              variant: "destructive",
+            });
+          }
+        } else {
+          // Plain text/CSV file
+          setFileData(data as string);
+        }
       };
-      reader.readAsText(uploadedFile);
+      
+      // Read as array buffer for Excel, as text for CSV
+      if (uploadedFile.name.endsWith('.xlsx') || uploadedFile.name.endsWith('.xls')) {
+        reader.readAsArrayBuffer(uploadedFile);
+      } else {
+        reader.readAsText(uploadedFile);
+      }
     } else {
       setFileData("");
     }
-  }, [uploadedFile]);
+  }, [uploadedFile, toast]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
