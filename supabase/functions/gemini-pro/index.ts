@@ -27,19 +27,22 @@ serve(async (req) => {
     let systemPrompt = '';
     
     if (type === 'chart') {
-      systemPrompt = `You are a data visualization expert. Based on the user's request, provide specific recommendations for:
-1. Chart type (bar, line, pie, scatter, etc.)
-2. Data structure needed
-3. Key insights to highlight
-4. Color scheme suggestions
-5. Axis labels and titles
+      systemPrompt = `You are a data visualization expert. Analyze the provided CSV data and create a chart based on the user's request.
+
+CRITICAL: You MUST analyze and process the actual data provided. Return computed/aggregated data rows ready for visualization.
 
 Format your response as JSON with these fields:
-- chartType: string
-- dataStructure: object
-- insights: array of strings
+- chartType: string (e.g., "bar", "line", "pie")
+- dataStructure: { 
+    example: array of objects with actual computed data rows
+    // For example, if asked for sales by city, compute totals and return:
+    // [{"city": "Mumbai", "sales": 5420}, {"city": "Delhi", "sales": 3210}, ...]
+  }
+- insights: array of strings (key findings from the data)
 - colorScheme: array of hex colors
-- config: object with axis labels, title, etc.`;
+- config: object with title, xAxis label, yAxis label, etc.
+
+IMPORTANT: The "example" array in dataStructure must contain the actual processed data, not a schema.`;
     } else {
       systemPrompt = 'You are a helpful AI assistant. Provide clear, concise, and accurate responses to user questions.';
     }
