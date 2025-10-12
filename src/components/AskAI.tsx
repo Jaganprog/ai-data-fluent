@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, Send, Loader2 } from "lucide-react";
 import { askGemini } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface AskAIProps {
   uploadedFile?: File | null;
@@ -17,15 +18,34 @@ export const AskAI = ({ uploadedFile }: AskAIProps) => {
   const [fileData, setFileData] = useState<string>("");
   const { toast } = useToast();
 
-  // Parse CSV when file is uploaded
+  // Parse file when uploaded (handles both CSV and Excel)
   useEffect(() => {
     if (uploadedFile) {
+      const fileExtension = uploadedFile.name.split('.').pop()?.toLowerCase();
+      const isExcel = fileExtension === 'xlsx' || fileExtension === 'xls';
+      
       const reader = new FileReader();
       reader.onload = (e) => {
-        const text = e.target?.result as string;
-        setFileData(text);
+        if (isExcel) {
+          // Parse Excel file
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const csvText = XLSX.utils.sheet_to_csv(worksheet);
+          setFileData(csvText);
+        } else {
+          // Parse as plain text (CSV)
+          const text = e.target?.result as string;
+          setFileData(text);
+        }
       };
-      reader.readAsText(uploadedFile);
+      
+      if (isExcel) {
+        reader.readAsArrayBuffer(uploadedFile);
+      } else {
+        reader.readAsText(uploadedFile);
+      }
     } else {
       setFileData("");
     }
