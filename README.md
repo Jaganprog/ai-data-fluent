@@ -1,6 +1,6 @@
-I'll read the current README.md file and provide you with a version without Lovable-specific references.
 
-Here's a README.md file content without Lovable-specific references:
+
+Here's a README.md file 
 
 ```markdown
 # DataNova - AI-Powered Data Analysis Dashboard
