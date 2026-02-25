@@ -10,199 +10,11 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      chat_messages: {
-        Row: {
-          chat_id: string
-          content: string
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["message_role"]
-        }
-        Insert: {
-          chat_id: string
-          content: string
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["message_role"]
-        }
-        Update: {
-          chat_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["message_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chats: {
-        Row: {
-          created_at: string
-          dataset_id: string | null
-          id: string
-          title: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          dataset_id?: string | null
-          id?: string
-          title?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          dataset_id?: string | null
-          id?: string
-          title?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chats_dataset_id_fkey"
-            columns: ["dataset_id"]
-            isOneToOne: false
-            referencedRelation: "datasets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dashboard_items: {
-        Row: {
-          config: Json
-          created_at: string
-          dashboard_id: string
-          id: string
-          item_type: Database["public"]["Enums"]["dashboard_item_type"]
-          position: number
-          updated_at: string
-        }
-        Insert: {
-          config: Json
-          created_at?: string
-          dashboard_id: string
-          id?: string
-          item_type: Database["public"]["Enums"]["dashboard_item_type"]
-          position?: number
-          updated_at?: string
-        }
-        Update: {
-          config?: Json
-          created_at?: string
-          dashboard_id?: string
-          id?: string
-          item_type?: Database["public"]["Enums"]["dashboard_item_type"]
-          position?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dashboard_items_dashboard_id_fkey"
-            columns: ["dashboard_id"]
-            isOneToOne: false
-            referencedRelation: "dashboards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dashboards: {
-        Row: {
-          created_at: string
-          id: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      datasets: {
-        Row: {
-          columns: Json | null
-          created_at: string
-          file_path: string | null
-          id: string
-          name: string
-          row_count: number | null
-          status: Database["public"]["Enums"]["dataset_status"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          columns?: Json | null
-          created_at?: string
-          file_path?: string | null
-          id?: string
-          name: string
-          row_count?: number | null
-          status?: Database["public"]["Enums"]["dataset_status"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          columns?: Json | null
-          created_at?: string
-          file_path?: string | null
-          id?: string
-          name?: string
-          row_count?: number | null
-          status?: Database["public"]["Enums"]["dataset_status"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -211,9 +23,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      dashboard_item_type: "chart" | "table" | "kpi"
-      dataset_status: "uploaded" | "processing" | "ready" | "failed"
-      message_role: "user" | "assistant"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -340,10 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      dashboard_item_type: ["chart", "table", "kpi"],
-      dataset_status: ["uploaded", "processing", "ready", "failed"],
-      message_role: ["user", "assistant"],
-    },
+    Enums: {},
   },
 } as const
