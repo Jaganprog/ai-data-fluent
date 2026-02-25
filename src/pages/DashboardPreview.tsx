@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AIGeneratedDashboard } from "@/components/AIGeneratedDashboard";
-import { ArrowLeft, Save, Edit3 } from "lucide-react";
+import { ArrowLeft, Save, Edit3, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const DashboardPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
   const dashboardConfig = location.state?.dashboardConfig;
 
   if (!dashboardConfig) {
@@ -15,12 +18,45 @@ const DashboardPreview = () => {
     return null;
   }
 
-  const handleSaveDashboard = () => {
-    toast({
-      title: "Dashboard Saved!",
-      description: `"${dashboardConfig.name}" has been saved successfully`,
-    });
-    navigate("/dashboard");
+  const handleSaveDashboard = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to save dashboards",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const { error } = await supabase.from("dashboards" as any).insert({
+        user_id: user.id,
+        name: dashboardConfig.name,
+        description: dashboardConfig.description || "",
+        category: dashboardConfig.category || "custom",
+        config: dashboardConfig,
+      } as any);
+
+      if (error) throw error;
+
+      toast({
+        title: "Dashboard Saved!",
+        description: `"${dashboardConfig.name}" has been saved successfully`,
+      });
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Error saving dashboard:", error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Could not save dashboard",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -57,10 +93,15 @@ const DashboardPreview = () => {
               </Button>
               <Button 
                 onClick={handleSaveDashboard}
+                disabled={saving}
                 className="bg-gradient-to-r from-primary to-data-secondary"
               >
-                <Save className="w-4 h-4 mr-2" />
-                Save Dashboard
+                {saving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {saving ? "Saving..." : "Save Dashboard"}
               </Button>
             </div>
           </div>

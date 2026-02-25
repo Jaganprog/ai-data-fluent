@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import CreateDashboard from "./pages/CreateDashboard";
 import DashboardPreview from "./pages/DashboardPreview";
+import DashboardView from "./pages/DashboardView";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/create" element={<CreateDashboard />} />
               <Route path="/dashboard/preview" element={<DashboardPreview />} />
+              <Route path="/dashboard/view/:id" element={<DashboardView />} />
               <Route path="/dashboard/chat" element={<Chat />} />
               <Route path="/dashboard/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
