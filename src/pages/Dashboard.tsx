@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,10 @@ import {
   Search,
   Plus,
   Bell,
-  Settings
+  Settings,
+  Trash2,
+  Eye,
+  Loader2
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,11 +21,65 @@ import { AskAI } from "@/components/AskAI";
 import { ChartGenerator } from "@/components/ChartGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SavedDashboard {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  config: any;
+  created_at: string;
+}
 
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [savedDashboards, setSavedDashboards] = useState<SavedDashboard[]>([]);
+  const [loadingDashboards, setLoadingDashboards] = useState(true);
+
+  useEffect(() => {
+    fetchDashboards();
+  }, []);
+
+  const fetchDashboards = async () => {
+    try {
+      const { data, error } = await (supabase.from("dashboards" as any) as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setSavedDashboards(data || []);
+    } catch (error) {
+      console.error("Error fetching dashboards:", error);
+    } finally {
+      setLoadingDashboards(false);
+    }
+  };
+
+  const deleteDashboard = async (id: string, name: string) => {
+    try {
+      const { error } = await (supabase.from("dashboards" as any) as any)
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setSavedDashboards(prev => prev.filter(d => d.id !== id));
+      toast({
+        title: "Dashboard Deleted",
+        description: `"${name}" has been removed`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation */}
@@ -129,11 +186,90 @@ const Dashboard = () => {
                 </Button>
               </CardContent>
             </Card>
-
           </div>
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
+
+            {/* Saved Dashboards */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  Your Dashboards
+                </CardTitle>
+                <CardDescription>View and manage your saved dashboards</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingDashboards ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : savedDashboards.length === 0 ? (
+                  <div className="text-center py-8 space-y-3">
+                    <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto" />
+                    <p className="text-muted-foreground">No dashboards yet</p>
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate("/dashboard/create")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Your First Dashboard
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {savedDashboards.map((dashboard) => (
+                      <Card key={dashboard.id} className="hover:border-primary/50 transition-colors cursor-pointer group">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div 
+                              className="flex-1"
+                              onClick={() => navigate(`/dashboard/view/${dashboard.id}`, {
+                                state: { dashboardConfig: dashboard.config }
+                              })}
+                            >
+                              <h3 className="font-semibold group-hover:text-primary transition-colors">{dashboard.name}</h3>
+                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                                {dashboard.description || "No description"}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                  {dashboard.category}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(dashboard.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-1 ml-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => navigate(`/dashboard/view/${dashboard.id}`, {
+                                  state: { dashboardConfig: dashboard.config }
+                                })}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => deleteDashboard(dashboard.id, dashboard.name)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Upload Section */}
             <Card className="border-2 border-dashed border-data-primary/30">
@@ -209,7 +345,6 @@ const Dashboard = () => {
                             title: "Upload Started",
                             description: `Uploading ${selectedFile.name}...`,
                           });
-                          // Here you would handle the actual upload
                         }}
                       >
                         Start Upload
