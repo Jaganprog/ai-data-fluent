@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -30,12 +31,12 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/dashboard/create" element={<CreateDashboard />} />
-              <Route path="/dashboard/preview" element={<DashboardPreview />} />
-              <Route path="/dashboard/view/:id" element={<DashboardView />} />
-              <Route path="/dashboard/chat" element={<Chat />} />
-              <Route path="/dashboard/settings" element={<Settings />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/create" element={<ProtectedRoute><CreateDashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/preview" element={<ProtectedRoute><DashboardPreview /></ProtectedRoute>} />
+              <Route path="/dashboard/view/:id" element={<ProtectedRoute><DashboardView /></ProtectedRoute>} />
+              <Route path="/dashboard/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+              <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
