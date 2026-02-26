@@ -77,10 +77,11 @@ const Signup = () => {
       });
 
       if (error) {
-        // Handle specific error cases
         let errorMessage = error.message;
         
-        if (error.message.includes("timeout") || error.message.includes("504")) {
+        if (error.message === "Failed to fetch" || error.message.includes("fetch")) {
+          errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (error.message.includes("timeout") || error.message.includes("504")) {
           errorMessage = "The signup request timed out. Please try again in a moment.";
         } else if (error.message.includes("User already registered")) {
           errorMessage = "An account with this email already exists. Try signing in instead.";
