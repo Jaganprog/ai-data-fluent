@@ -53,28 +53,39 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        let errorMessage = error.message;
+        if (error.message === "Failed to fetch" || error.message.includes("fetch")) {
+          errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (error.message === "Invalid login credentials") {
+          errorMessage = "Invalid email or password. Please try again.";
+        }
         toast({
-          title: "Error",
-          description: error.message,
+          title: "Sign In Failed",
+          description: errorMessage,
           variant: "destructive",
         });
-      } else {
+      } else if (data?.session) {
         toast({
           title: "Success",
           description: "Successfully signed in!",
         });
         navigate("/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Login error:", error);
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      if (error?.message?.includes("fetch") || error?.name === "TypeError") {
+        errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+      }
       toast({
-        title: "Error",
-        description: "An unexpected error occurred",
+        title: "Connection Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
